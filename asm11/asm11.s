@@ -1,7 +1,7 @@
 section .bss
     buffer resb 1024
     count resb 32
-
+    
 section .text
 global _start
 
@@ -25,10 +25,11 @@ _start:
     
     mov al, [rsi]
     
-    cmp al, 10 ; Ignore newline read from standard input
+    cmp al, 10
+    je .next_char
+    cmp al, 13
     je .next_char
 
-    ; Convert to lowercase if uppercase
     cmp al, 'A'
     jl .check_vowel_only
     cmp al, 'Z'
@@ -60,7 +61,10 @@ _start:
 
 .to_ascii_convert:
     mov rax, rbx
-    mov rdi, count+31
+    
+    mov r8, count+32
+    mov rdi, r8
+    dec rdi
     mov byte [rdi], 10
     mov rcx, 10
 
@@ -77,7 +81,7 @@ _start:
 
     inc rdi
     mov rsi, rdi
-    mov rdx, count+32
+    mov rdx, r8
     sub rdx, rsi
     
     mov rax, 1
