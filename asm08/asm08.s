@@ -1,5 +1,5 @@
 section .data
-    usage_msg db "Usage: ./asm08 <N> <expected_sum>", 10, 0
+    usage_msg db "Usage: ./asm08 <N>", 10, 0
     usage_len equ $ - usage_msg - 1
     newline db 10, 0
 
@@ -11,15 +11,12 @@ section .text
 
 _start:
     pop rax
-    cmp rax, 3
+    cmp rax, 2
     jne usage_error
     pop rdi
     pop rdi
     call atoi
     mov r12, rax
-    pop rdi
-    call atoi
-    mov r13, rax
     xor r14, r14
     mov r15, 1
 
@@ -38,13 +35,6 @@ sum_done:
     mov rsi, newline
     mov rdx, 1
     syscall
-    cmp r14, r13
-    je exit_success
-    mov rax, 60
-    mov rdi, 1
-    syscall
-
-exit_success:
     mov rax, 60
     mov rdi, 0
     syscall
