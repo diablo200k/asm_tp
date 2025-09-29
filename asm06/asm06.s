@@ -14,35 +14,58 @@ _start:
 
     xor rax, rax
     xor rcx, rcx
+    mov r8, 1
+    mov r9, 0
 atoi1:
     mov dl, byte [rsi+rcx]
     cmp dl, 0
     je atoi1_done
+    cmp dl, '-'
+    jne atoi1_digit
+    mov r8, -1
+    inc rcx
+    jmp atoi1
+atoi1_digit:
     sub dl, '0'
     imul rax, rax, 10
     add rax, rdx
     inc rcx
     jmp atoi1
 atoi1_done:
+    imul rax, rax, r8
     mov r8, rax
 
     xor rax, rax
     xor rcx, rcx
+    mov r8d, 1
 atoi2:
     mov dl, byte [rdi+rcx]
     cmp dl, 0
     je atoi2_done
+    cmp dl, '-'
+    jne atoi2_digit
+    mov r8d, -1
+    inc rcx
+    jmp atoi2
+atoi2_digit:
     sub dl, '0'
     imul rax, rax, 10
     add rax, rdx
     inc rcx
     jmp atoi2
 atoi2_done:
+    imul rax, rax, r8d
     add rax, r8
-
     mov rbx, rax
+
     lea rsi, [buf+19]
     mov rcx, 0
+    mov r8, rbx
+    cmp rbx, 0
+    jge itoa_positive
+    neg rbx
+    mov byte [buf], '-'
+itoa_positive:
 itoa:
     xor rdx, rdx
     mov rax, rbx
@@ -55,11 +78,14 @@ itoa:
     cmp rbx, 0
     jne itoa
 
+    cmp r8, 0
+    jge print
+    lea rsi, [buf]
+print:
     mov rdx, buf+20
     sub rdx, rsi
     mov rax, 1
     mov rdi, 1
-    mov rsi, rsi
     syscall
 
     mov rax, 60
