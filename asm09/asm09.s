@@ -1,5 +1,5 @@
 section .data
-    usage_msg db "Usage: ./asm09 [-b] <number> <expected>", 10, 0
+    usage_msg db "Usage: ./asm09 [-b] <number>", 10, 0
     usage_len equ $ - usage_msg - 1
     newline db 10, 0
     hex_digits db "0123456789ABCDEF"
@@ -12,9 +12,9 @@ section .text
 
 _start:
     pop rax
-    cmp rax, 3
+    cmp rax, 2
     je check_normal
-    cmp rax, 4
+    cmp rax, 3
     je check_binary_flag
     jmp usage_error
 
@@ -31,43 +31,31 @@ check_binary_flag:
     mov al, [rsi+2]
     test al, al
     jnz usage_error
-    mov r11, 1
     pop rdi
     call atoi
-    mov r12, rax
-    pop rdi
-    mov r13, rdi
-    jmp convert_binary
+    mov rdi, rax
+    call to_binary
+    jmp print_result
 
 check_normal:
     pop rdi
-    mov r11, 0
     pop rdi
     call atoi
-    mov r12, rax
-    pop rdi
-    mov r13, rdi
-    jmp convert_hex
-
-convert_hex:
-    mov rdi, r12
+    mov rdi, rax
     call to_hex
-    mov rdi, buffer
-    mov rsi, r13
-    call compare_strings
-    test rax, rax
-    jz exit_success
-    jmp exit_fail
+    jmp print_result
 
-convert_binary:
-    mov rdi, r12
-    call to_binary
+print_result:
     mov rdi, buffer
-    mov rsi, r13
-    call compare_strings
-    test rax, rax
-    jz exit_success
-    jmp exit_fail
+    call print_string
+    mov rax, 1
+    mov rdi, 1
+    mov rsi, newline
+    mov rdx, 1
+    syscall
+    mov rax, 60
+    mov rdi, 0
+    syscall
 
 to_hex:
     mov rax, rdi
@@ -152,49 +140,6 @@ copy_binary:
 copy_binary_done:
     mov byte [rdi], 0
     ret
-
-compare_strings:
-    mov al, [rdi]
-    mov bl, [rsi]
-    cmp al, bl
-    jne strings_different
-    test al, al
-    jz strings_equal
-    inc rdi
-    inc rsi
-    jmp compare_strings
-
-strings_equal:
-    mov rax, 0
-    ret
-
-strings_different:
-    mov rax, 1
-    ret
-
-exit_success:
-    mov rdi, buffer
-    call print_string
-    mov rax, 1
-    mov rdi, 1
-    mov rsi, newline
-    mov rdx, 1
-    syscall
-    mov rax, 60
-    mov rdi, 0
-    syscall
-
-exit_fail:
-    mov rdi, buffer
-    call print_string
-    mov rax, 1
-    mov rdi, 1
-    mov rsi, newline
-    mov rdx, 1
-    syscall
-    mov rax, 60
-    mov rdi, 1
-    syscall
 
 usage_error:
     mov rax, 1
