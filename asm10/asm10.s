@@ -27,11 +27,17 @@ _start:
     mov rbx, rax
 .skip3:
 
-    mov rax, rbx
     mov rdi, buf+31
     mov rcx, 10
     mov byte [rdi], 10
     dec rdi
+
+    mov r8, rbx
+    cmp rbx, 0
+    jge .positive_val
+    neg rbx
+.positive_val:
+
 .to_ascii:
     xor rdx, rdx
     mov rax, rbx
@@ -39,17 +45,20 @@ _start:
     add dl, '0'
     mov [rdi], dl
     mov rbx, rax
-    test rax, rax
-    jnz .cont
-    jmp .print
-.cont:
     dec rdi
-    jmp .to_ascii
+    test rax, rax
+    jnz .to_ascii
+    
+    cmp r8, 0
+    jge .print
+    mov byte [rdi], '-'
+    dec rdi
 
 .print:
-    lea rsi, [rdi]
+    lea rsi, [rdi+1]
     mov rdx, buf+32
-    sub rdx, rdi
+    sub rdx, rsi
+
     mov rax, 1
     mov rdi, 1
     syscall
@@ -59,17 +68,37 @@ _start:
     syscall
 
 str_to_int:
+    mov r10, 0
     xor rax, rax
+    
+    mov dl, byte [rsi]
+    cmp dl, '-'
+    jne .conv_start
+    mov r10, 1
+    inc rsi
+
+.conv_start:
 .conv_loop:
     mov dl, byte [rsi]
     cmp dl, 0
-    je .done
+    je .done_apply_sign
+    
+    cmp dl, '0'
+    jl .done_apply_sign
+    cmp dl, '9'
+    jg .done_apply_sign
+    
     sub dl, '0'
     imul rax, rax, 10
     add rax, rdx
     inc rsi
     jmp .conv_loop
-.done:
+
+.done_apply_sign:
+    cmp r10, 1
+    jne .done_ret
+    neg rax
+.done_ret:
     ret
 
 exit_error:
