@@ -9,27 +9,31 @@ _start:
     mov rdi, 0
     mov rsi, buf
     mov rdx, 10
-    syscall             ; read(0, buf, 10)
-    
+    syscall
+
     xor rbx, rbx
-    mov rcx, 0
+    xor rcx, rcx
 convert:
     mov dl, byte [buf+rcx]
     cmp dl, 10
     je done_convert
+    cmp dl, '0'
+    jb invalid_input
+    cmp dl, '9'
+    ja invalid_input
     sub dl, '0'
     imul rbx, rbx, 10
     add rbx, rdx
     inc rcx
     jmp convert
 done_convert:
-    mov rax, rbx        ; nombre à tester
+    mov rax, rbx
     cmp rax, 2
     jl not_prime
     cmp rax, 2
     je is_prime
 
-    mov rcx, 2          ; diviseur courant
+    mov rcx, 2
 check_loop:
     mov rdx, 0
     mov r8, rax
@@ -49,4 +53,9 @@ is_prime:
 not_prime:
     mov rax, 60
     mov rdi, 1
+    syscall
+
+invalid_input:
+    mov rax, 60
+    mov rdi, 2
     syscall
