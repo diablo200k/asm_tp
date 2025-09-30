@@ -8,14 +8,16 @@ _start:
     pop rdi
     mov rsi, rsp
     cmp rdi, 2
-    jl .no_shift
+    jl .no_shift_param
     mov rbx, [rsi + 8]
     call atoi
     mov r12, rax
     jmp .read_input
 
-.no_shift:
-    xor r12, r12
+.no_shift_param:
+    mov rax, 60
+    mov rdi, 1
+    syscall
 
 .read_input:
     mov rax, 0
