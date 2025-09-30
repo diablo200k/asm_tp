@@ -4,7 +4,6 @@ section .bss
     
 section .text
 global _start
-
 _start:
     mov rax, 0
     mov rdi, 0
@@ -14,11 +13,10 @@ _start:
     
     mov rcx, rax
     cmp rcx, 0
-    jle .exit_success
+    jle .zero_vowels
     
     mov rsi, buffer
     mov rbx, 0
-
 .count_loop:
     cmp rcx, 0
     je .to_ascii_convert
@@ -29,14 +27,14 @@ _start:
     je .next_char
     cmp al, 13
     je .next_char
-
+    
     cmp al, 'A'
     jl .check_vowel_only
     cmp al, 'Z'
     jg .check_vowel_only
     
     add al, 32
-
+    
 .check_vowel_only:
     cmp al, 'a'
     je .vowel_found
@@ -50,16 +48,26 @@ _start:
     je .vowel_found
     
     jmp .next_char
-
+    
 .vowel_found:
     inc rbx
-
+    
 .next_char:
     inc rsi
     dec rcx
     jmp .count_loop
 
+.zero_vowels:
+    mov byte [count], '0'
+    mov byte [count+1], 10
+    mov rsi, count
+    mov rdx, 2
+    jmp .print_result
+    
 .to_ascii_convert:
+    cmp rbx, 0
+    je .zero_vowels
+    
     mov rax, rbx
     
     mov r8, count+32
@@ -67,7 +75,7 @@ _start:
     dec rdi
     mov byte [rdi], 10
     mov rcx, 10
-
+    
 .convert_digit:
     xor rdx, rdx
     div rcx
@@ -78,16 +86,16 @@ _start:
     
     cmp rax, 0
     jnz .convert_digit
-
-    inc rdi
+    
     mov rsi, rdi
     mov rdx, r8
     sub rdx, rsi
     
+.print_result:
     mov rax, 1
     mov rdi, 1
     syscall
-
+    
 .exit_success:
     mov rax, 60
     xor rdi, rdi
