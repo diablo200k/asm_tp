@@ -1,5 +1,6 @@
 section .bss
     buffer resb 1024
+    output resb 1024
 
 section .text
 global _start
@@ -24,7 +25,7 @@ _start:
     dec rcx
     
 .skip_newline:
-    mov rdi, buffer
+    mov rdi, output
     mov rbx, 0
     
 .reverse_loop:
@@ -45,7 +46,7 @@ _start:
     
     mov rax, 1
     mov rdi, 1
-    mov rsi, buffer
+    mov rsi, output
     mov rdx, rbx
     syscall
     
