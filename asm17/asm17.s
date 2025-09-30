@@ -8,10 +8,16 @@ _start:
     pop rdi
     mov rsi, rsp
     cmp rdi, 2
-    jl exit_error
+    jl .no_shift
     mov rbx, [rsi + 8]
     call atoi
     mov r12, rax
+    jmp .read_input
+
+.no_shift:
+    xor r12, r12
+
+.read_input:
     mov rax, 0
     mov rdi, 0
     mov rsi, buffer
@@ -19,25 +25,43 @@ _start:
     syscall
     mov r13, rax
     xor rcx, rcx
+
 .loop:
     cmp rcx, r13
     jge .done
     mov al, [buffer + rcx]
+
     cmp al, 'a'
-    jb .store
+    jb .check_upper
     cmp al, 'z'
-    ja .store
+    ja .check_upper
     sub al, 'a'
     add al, r12b
-    mov bl, 26
     xor ah, ah
+    mov bl, 26
     div bl
     mov al, ah
     add al, 'a'
+    jmp .store
+
+.check_upper:
+    cmp al, 'A'
+    jb .store
+    cmp al, 'Z'
+    ja .store
+    sub al, 'A'
+    add al, r12b
+    xor ah, ah
+    mov bl, 26
+    div bl
+    mov al, ah
+    add al, 'A'
+
 .store:
     mov [buffer + rcx], al
     inc rcx
     jmp .loop
+
 .done:
     mov rax, 1
     mov rdi, 1
@@ -48,22 +72,17 @@ _start:
     xor rdi, rdi
     syscall
 
-exit_error:
-    mov rax, 60
-    mov rdi, 1
-    syscall
-
 atoi:
     xor rax, rax
     xor rcx, rcx
 .next_digit:
     movzx rdx, byte [rbx + rcx]
     cmp rdx, 0
-    je .done
+    je .done_atoi
     sub rdx, '0'
     imul rax, rax, 10
     add rax, rdx
     inc rcx
     jmp .next_digit
-.done:
+.done_atoi:
     ret
