@@ -46,6 +46,8 @@ _start:
     je .vowel_found
     cmp al, 'u'
     je .vowel_found
+    cmp al, 'y'
+    je .vowel_found
     
     jmp .next_char
     
