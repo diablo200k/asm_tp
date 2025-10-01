@@ -1,123 +1,121 @@
+BITS 64
+default rel
+
+%define AF_INET 2
+%define SOCK_DGRAM 2
+%define SOL_SOCKET 1
+%define SO_RCVTIMEO 20
+%define SYS_write 1
+%define SYS_close 3
+%define SYS_socket 41
+%define SYS_sendto 44
+%define SYS_recvfrom 45
+%define SYS_setsockopt 54
+%define SYS_exit 60
+%define STDOUT 1
+%define SERVER_PORT 9999
+%define RCV_TIMEOUT_S 2
+%define IPV4_LOCALHOST 0x0100007F
+
 section .data
-    server_addr:
-        dw 2
-        dw 0x3930
-        dd 0x0100007F
-        times 8 db 0
-    
-    send_msg db "PING"
-    send_len equ 4
-    
-    timeout_msg db "Timeout: no response from server", 10
-    timeout_len equ 33
-    
-    recv_prefix db "message: ", 34
-    prefix_len equ 10
-    
-    quote db 34, 10
-    quote_len equ 2
+sockaddr:
+    dw AF_INET
+    dw 0x8F27          ; 9999 en big endian = 0x270F mais inversé (NASM little) = 0x0F27 -> pour 9999: 0x270F -> donc dw 0x270F
+    dd IPV4_LOCALHOST
+    dq 0
+timeval:
+    dq RCV_TIMEOUT_S
+    dq 0
+msg_prefix: db 'message: "'
+msg_suffix: db '"',10
+msg_timeout: db 'Timeout: no response from server',10
+ping: db 'ping'
 
 section .bss
-    buffer resb 1024
-    sockfd resq 1
-    timeval:
-        tv_sec resq 1
-        tv_usec resq 1
-    pollfd:
-        poll_fd resd 1
-        poll_events resw 1
-        poll_revents resw 1
+buf resb 1024
 
 section .text
 global _start
+
 _start:
-    mov rax, 41
-    mov rdi, 2
-    mov rsi, 2
-    xor rdx, rdx
+    mov rax,SYS_socket
+    mov rdi,AF_INET
+    mov rsi,SOCK_DGRAM
+    xor rdx,rdx
     syscall
-    
-    cmp rax, 0
-    jl .exit_error
-    
-    mov [sockfd], rax
-    
-    mov rax, 44
-    mov rdi, [sockfd]
-    mov rsi, send_msg
-    mov rdx, send_len
-    xor r10, r10
-    mov r8, server_addr
-    mov r9, 16
+    mov r12,rax
+
+    mov rax,SYS_setsockopt
+    mov rdi,r12
+    mov rsi,SOL_SOCKET
+    mov rdx,SO_RCVTIMEO
+    lea r10,[rel timeval]
+    mov r8,16
     syscall
-    
-    mov eax, [sockfd]
-    mov [poll_fd], eax
-    mov word [poll_events], 1
-    mov word [poll_revents], 0
-    
-    mov rax, 7
-    mov rdi, pollfd
-    mov rsi, 1
-    mov rdx, 2000
+
+    mov rax,SYS_sendto
+    mov rdi,r12
+    lea rsi,[rel ping]
+    mov rdx,4
+    xor r10,r10
+    lea r8,[rel sockaddr]
+    mov r9,16
     syscall
-    
-    cmp rax, 0
-    jle .timeout_error
-    
-    mov rax, 45
-    mov rdi, [sockfd]
-    mov rsi, buffer
-    mov rdx, 1024
-    xor r10, r10
-    xor r8, r8
-    xor r9, r9
+
+    mov rax,SYS_recvfrom
+    mov rdi,r12
+    lea rsi,[rel buf]
+    mov rdx,1024
+    xor r10,r10
+    xor r8,r8
+    xor r9,r9
     syscall
-    
-    cmp rax, 0
-    jle .timeout_error
-    
-    mov r12, rax
-    
-    mov rax, 1
-    mov rdi, 1
-    mov rsi, recv_prefix
-    mov rdx, prefix_len
+    test rax,rax
+    js timeout
+    mov r13,rax
+
+    mov rax,SYS_write
+    mov rdi,STDOUT
+    lea rsi,[rel msg_prefix]
+    mov rdx,10          ; longueur "message: \""
     syscall
-    
-    mov rax, 1
-    mov rdi, 1
-    mov rsi, buffer
-    mov rdx, r12
+
+    mov rax,SYS_write
+    mov rdi,STDOUT
+    lea rsi,[rel buf]
+    mov rdx,r13
     syscall
-    
-    mov rax, 1
-    mov rdi, 1
-    mov rsi, quote
-    mov rdx, quote_len
+
+    mov rax,SYS_write
+    mov rdi,STDOUT
+    lea rsi,[rel msg_suffix]
+    mov rdx,2
     syscall
-    
-    mov rax, 3
-    mov rdi, [sockfd]
+
+    mov rax,SYS_close
+    mov rdi,r12
     syscall
-    
-.exit_success:
-    mov rax, 60
-    xor rdi, rdi
+    mov rax,SYS_exit
+    xor rdi,rdi
     syscall
-    
-.timeout_error:
-    mov rax, 1
-    mov rdi, 1
-    mov rsi, timeout_msg
-    mov rdx, timeout_len
+
+timeout:
+    neg rax
+    cmp rax,11
+    jne fatal
+    mov rax,SYS_write
+    mov rdi,STDOUT
+    lea rsi,[rel msg_timeout]
+    mov rdx,33
     syscall
-    
-    mov rax, 3
-    mov rdi, [sockfd]
+    mov rax,SYS_close
+    mov rdi,r12
     syscall
-    
-.exit_error:
-    mov rax, 60
-    mov rdi, 1
+    mov rax,SYS_exit
+    mov rdi,1
+    syscall
+
+fatal:
+    mov rax,SYS_exit
+    mov rdi,1
     syscall
