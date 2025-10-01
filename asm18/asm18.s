@@ -5,7 +5,7 @@ section .data
         dd 0x0100007F
         times 8 db 0
     
-    send_msg db "PING", 0
+    send_msg db "PING"
     send_len equ 4
     
     timeout_msg db "Timeout: no response from server", 10
@@ -23,6 +23,10 @@ section .bss
     timeval:
         tv_sec resq 1
         tv_usec resq 1
+    pollfd:
+        poll_fd resd 1
+        poll_events resw 1
+        poll_revents resw 1
 
 section .text
 global _start
@@ -38,17 +42,6 @@ _start:
     
     mov [sockfd], rax
     
-    mov qword [tv_sec], 2
-    mov qword [tv_usec], 0
-    
-    mov rax, 54
-    mov rdi, [sockfd]
-    mov rsi, 1
-    mov rdx, 20
-    mov r10, timeval
-    mov r8, 16
-    syscall
-    
     mov rax, 44
     mov rdi, [sockfd]
     mov rsi, send_msg
@@ -57,6 +50,20 @@ _start:
     mov r8, server_addr
     mov r9, 16
     syscall
+    
+    mov eax, [sockfd]
+    mov [poll_fd], eax
+    mov word [poll_events], 1
+    mov word [poll_revents], 0
+    
+    mov rax, 7
+    mov rdi, pollfd
+    mov rsi, 1
+    mov rdx, 2000
+    syscall
+    
+    cmp rax, 0
+    jle .timeout_error
     
     mov rax, 45
     mov rdi, [sockfd]
