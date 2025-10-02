@@ -7,6 +7,7 @@ section .data
     pong_len   equ $-pong
     goodbye    db 'Goodbye!',10
     goodbye_len equ $-goodbye
+    newline    db 10
     sockaddr:
         dw 2
         dw 0x9210
@@ -110,7 +111,36 @@ _start:
     cmp al,'R'
     je .try_reverse
     cmp al,'E'
-    je .try_exit
+    je .try_echo_or_exit
+    jmp .cmd_loop
+
+.try_echo_or_exit:
+    cmp byte [rel buf+1],'C'
+    je .try_echo
+    jmp .try_exit
+
+.try_echo:
+    cmp r14,5
+    jl .cmd_loop
+    cmp dword [rel buf],'ECHO'
+    jne .cmd_loop
+    cmp byte [rel buf+4],' '
+    jne .cmd_loop
+
+    lea rsi,[rel buf]
+    add rsi,5
+    mov rdx,r14
+    sub rdx,5
+
+    mov rax,1
+    mov rdi,r13
+    syscall
+
+    mov rax,1
+    mov rdi,r13
+    lea rsi,[rel newline]
+    mov rdx,1
+    syscall
     jmp .cmd_loop
 
 .try_ping:
