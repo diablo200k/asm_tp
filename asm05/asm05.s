@@ -5,26 +5,26 @@ section .text
     global _start
 
 _start:
-    mov rbx, [rsp]         
-    cmp rbx, 2            
-    jne exit_error         
+    mov rax, [rsp]
+    cmp rax, 2
+    jl exit_error
 
     mov rsi, [rsp+16]
     test rsi, rsi
     jz exit_error
-   
-    xor rcx, rcx           
+
+    xor rcx, rcx
 .len_loop:
-    mov al, byte [rsi+rcx]
-    cmp al, 0
+    mov al, [rsi+rcx]
+    test al, al
     je .len_done
     inc rcx
     jmp .len_loop
 .len_done:
 
-    mov rax, 1             
-    mov rdi, 1            
-    mov rdx, rcx           
+    mov rax, 1
+    mov rdi, 1
+    mov rdx, rcx
     syscall
 
     mov rax, 1
