@@ -73,29 +73,28 @@ _start:
     syscall
     cmp rax, -4095
     jae .bad_exit
-    mov rdi, rax
     mov r12, rax
+    mov rdi, rax
     mov rsi, [rsp+16]
 
 .parse_loop:
     mov al, [rsi]
     test al, al
     jz .parse_done
+    cmp al, ' '
+    je .skip
+    cmp al, 9
+    je .skip
+    cmp al, 10
+    je .skip
     cmp al, '\'
-    jne .copy_char
-    
-    ; Vérifier qu'il y a un caractère après '\'
+    jne .bad_exit
     mov al, [rsi+1]
-    test al, al
-    jz .bad_exit
-    
     cmp al, 'x'
     je .have_x
     cmp al, 'X'
-    jne .copy_backslash
-    
+    jne .bad_exit
 .have_x:
-    ; Vérifier qu'il y a 2 caractères hex après \x
     mov al, [rsi+2]
     test al, al
     jz .bad_exit
@@ -103,39 +102,17 @@ _start:
     jc .bad_exit
     shl al, 4
     mov bl, al
-    
     mov al, [rsi+3]
     test al, al
     jz .bad_exit
     call hexval
     jc .bad_exit
-    
     or al, bl
     mov [rdi], al
     add rsi, 4
     inc rdi
     jmp .parse_loop
-
-.copy_backslash:
-    mov al, [rsi]
-    mov [rdi], al
-    inc rsi
-    inc rdi
-    jmp .parse_loop
-
-.copy_char:
-    cmp al, ' '
-    je .skip1
-    cmp al, 9
-    je .skip1
-    cmp al, 10
-    je .skip1
-    mov [rdi], al
-    inc rsi
-    inc rdi
-    jmp .parse_loop
-    
-.skip1:
+.skip:
     inc rsi
     jmp .parse_loop
 
