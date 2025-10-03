@@ -12,7 +12,14 @@ _start:
     mov rbx, [rsi + 8]
     call atoi
     mov r12, rax
-    jmp .read_input
+    mov rax, r12
+    mov rbx, 26
+    cqo
+    idiv rbx
+    mov r12, rdx
+    test r12, r12
+    jge .read_input
+    add r12, 26
 
 .no_shift_param:
     mov rax, 60
@@ -77,14 +84,33 @@ _start:
 atoi:
     xor rax, rax
     xor rcx, rcx
-.next_digit:
+    mov r8, 1
+    movzx rdx, byte [rbx + rcx]
+    cmp rdx, '+'
+    je .sign_plus
+    cmp rdx, '-'
+    jne .digits
+    mov r8, -1
+    inc rcx
+    jmp .digits
+.sign_plus:
+    inc rcx
+.digits:
     movzx rdx, byte [rbx + rcx]
     cmp rdx, 0
     je .done_atoi
+    cmp rdx, '0'
+    jb .done_atoi
+    cmp rdx, '9'
+    ja .done_atoi
     sub rdx, '0'
     imul rax, rax, 10
     add rax, rdx
     inc rcx
-    jmp .next_digit
+    jmp .digits
 .done_atoi:
+    cmp r8, 1
+    je .ret_atoi
+    neg rax
+.ret_atoi:
     ret
