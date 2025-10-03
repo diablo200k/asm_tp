@@ -1,3 +1,6 @@
+section .data
+    newline db 10
+
 section .text
     global _start
 
@@ -26,7 +29,7 @@ _start:
 
     mov rax, 1
     mov rdi, 1
-    lea rsi, [rel newline]
+    mov rsi, newline
     mov rdx, 1
     syscall
 
@@ -38,6 +41,3 @@ exit_error:
     mov rax, 60
     mov rdi, 1
     syscall
-
-section .data
-    newline db 10
