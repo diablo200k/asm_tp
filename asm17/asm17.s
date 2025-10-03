@@ -21,11 +21,6 @@ _start:
     jge .read_input
     add r12, 26
 
-.no_shift_param:
-    mov rax, 60
-    mov rdi, 1
-    syscall
-
 .read_input:
     mov rax, 0
     mov rdi, 0
@@ -77,6 +72,11 @@ _start:
     mov rsi, buffer
     mov rdx, r13
     syscall
+    mov rax, 60
+    xor rdi, rdi
+    syscall
+
+.no_shift_param:
     mov rax, 60
     xor rdi, rdi
     syscall
