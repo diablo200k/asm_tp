@@ -1,0 +1,124 @@
+BITS 64
+GLOBAL _start
+
+SECTION .text
+
+strlen:
+    push rdi
+    xor eax, eax
+    mov rcx, -1
+    repne scasb
+    not rcx
+    dec rcx
+    mov rax, rcx
+    pop rdi
+    ret
+
+hexval:
+    cmp al, '0'
+    jb .bad
+    cmp al, '9'
+    jbe .num
+    cmp al, 'A'
+    jb .chk_a
+    cmp al, 'F'
+    jbe .AtoF
+.chk_a:
+    cmp al, 'a'
+    jb .bad
+    cmp al, 'f'
+    ja .bad
+    sub al, 'a' - 10
+    clc
+    ret
+.AtoF:
+    sub al, 'A' - 10
+    clc
+    ret
+.num:
+    sub al, '0'
+    clc
+    ret
+.bad:
+    stc
+    ret
+
+_start:
+    mov rbx, [rsp]
+    cmp rbx, 2
+    jae .have_arg
+    mov edi, 1
+    mov eax, 60
+    syscall
+.have_arg:
+    mov rsi, [rsp+16]
+    mov rdi, rsi
+    call strlen
+    mov rdx, rax
+    add rdx, 4095
+    and rdx, -4096
+    xor edi, edi
+    mov rsi, rdx
+    mov edx, 7
+    mov r10d, 0x22
+    mov r8d, -1
+    xor r9d, r9d
+    mov eax, 9
+    syscall
+    mov rdi, rax
+    mov r12, rax
+    mov rsi, [rsp+16]
+.parse_loop:
+    mov al, [rsi]
+    test al, al
+    jz .parse_done
+    cmp al, '\'
+    jne .copy_char
+    mov al, [rsi+1]
+    cmp al, 'x'
+    je .have_x
+    cmp al, 'X'
+    jne .copy_backslash
+.have_x:
+    mov al, [rsi+2]
+    push rsi
+    call hexval
+    jc .restore_copy
+    shl al, 4
+    mov bl, al
+    mov al, [rsi+3]
+    call hexval
+    jc .restore_copy
+    or al, bl
+    mov [rdi], al
+    add rsi, 4
+    inc rdi
+    jmp .parse_loop
+.restore_copy:
+    pop rsi
+.copy_backslash:
+    mov al, [rsi]
+    mov [rdi], al
+    inc rsi
+    inc rdi
+    jmp .parse_loop
+.copy_char:
+    cmp al, ' '
+    je .skip1
+    cmp al, 9
+    je .skip1
+    cmp al, 10
+    je .skip1
+    mov [rdi], al
+    inc rsi
+    inc rdi
+    jmp .parse_loop
+.skip1:
+    inc rsi
+    jmp .parse_loop
+.parse_done:
+    mov rax, r12
+    call rax
+    xor edi, edi
+    mov eax, 60
+    syscall
