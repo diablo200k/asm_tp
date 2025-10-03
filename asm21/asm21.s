@@ -90,6 +90,8 @@ _start:
     cmp al, '\'
     jne .bad_exit
     mov al, [rsi+1]
+    test al, al
+    jz .bad_exit
     cmp al, 'x'
     je .have_x
     cmp al, 'X'
