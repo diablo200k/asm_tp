@@ -33,6 +33,8 @@ check_binary_flag:
     jnz usage_error
     pop rdi
     call atoi
+    cmp r10, 1
+    je usage_error
     mov rdi, rax
     call to_binary
     jmp print_result
@@ -41,6 +43,8 @@ check_normal:
     pop rdi
     pop rdi
     call atoi
+    cmp r10, 1
+    je usage_error
     mov rdi, rax
     call to_hex
     jmp print_result
@@ -171,6 +175,14 @@ strlen_done:
 atoi:
     xor rax, rax
     xor rcx, rcx
+    xor r10, r10
+    xor r11, r11
+
+    mov cl, [rdi]
+    cmp cl, '-'
+    jne atoi_loop
+    mov r10, 1
+    inc rdi
 
 atoi_loop:
     mov cl, [rdi]
@@ -184,7 +196,14 @@ atoi_loop:
     imul rax, rax, 10
     add rax, rcx
     inc rdi
+    inc r11
     jmp atoi_loop
 
 atoi_done:
+    test r11, r11
+    jz atoi_invalid
+    ret
+
+atoi_invalid:
+    mov r10, 1
     ret
