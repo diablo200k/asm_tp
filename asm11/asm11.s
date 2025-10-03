@@ -1,33 +1,77 @@
 section .bss
-    buffer resb 1024
+    buffer resb 65536
     count resb 32
     
 section .text
 global _start
 _start:
+    xor rbx, rbx
+    
+.read_loop:
     mov rax, 0
     mov rdi, 0
-    mov rsi, buffer
-    mov rdx, 1024
+    lea rsi, [buffer + rbx]
+    mov rdx, 4096
     syscall
     
-    mov rcx, rax
+    cmp rax, 0
+    jle .done_reading
+    
+    add rbx, rax
+    cmp rbx, 65536
+    jl .read_loop
+    
+.done_reading:
+    mov rcx, rbx
     cmp rcx, 0
     jle .zero_vowels
     
     mov rsi, buffer
     mov rbx, 0
+    
 .count_loop:
     cmp rcx, 0
     je .to_ascii_convert
     
-    mov al, [rsi]
+    movzx rax, byte [rsi]
     
     cmp al, 10
     je .next_char
     cmp al, 13
     je .next_char
     
+    cmp al, 0xC3
+    jne .check_ascii
+    
+    cmp rcx, 1
+    jle .next_char
+    
+    movzx rdx, byte [rsi+1]
+    
+    cmp dl, 0xA0
+    je .vowel_found
+    cmp dl, 0xA2
+    je .vowel_found
+    cmp dl, 0xA8
+    je .vowel_found
+    cmp dl, 0xAA
+    je .vowel_found
+    cmp dl, 0xB9
+    je .vowel_found
+    cmp dl, 0x80
+    je .vowel_found
+    cmp dl, 0x82
+    je .vowel_found
+    cmp dl, 0x88
+    je .vowel_found
+    cmp dl, 0x8A
+    je .vowel_found
+    
+    inc rsi
+    dec rcx
+    jmp .next_char
+    
+.check_ascii:
     cmp al, 'A'
     jl .check_vowel_only
     cmp al, 'Z'
