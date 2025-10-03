@@ -88,6 +88,10 @@ _start:
     je .skip
     cmp al, 10
     je .skip
+    cmp al, 13
+    je .skip
+    cmp al, ','
+    je .skip
     cmp al, '\'
     jne .bad_exit
 
