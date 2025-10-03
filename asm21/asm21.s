@@ -46,14 +46,20 @@ hexval:
 _start:
     mov rbx, [rsp]
     cmp rbx, 2
-    jae .have_arg
+    je .have_arg
     mov edi, 1
     mov eax, 60
     syscall
+
 .have_arg:
     mov rsi, [rsp+16]
+    test rsi, rsi
+    jz .bad_exit
     mov rdi, rsi
     call strlen
+    test rax, rax
+    jz .bad_exit
+
     mov rdx, rax
     add rdx, 4095
     and rdx, -4096
@@ -65,9 +71,12 @@ _start:
     xor r9d, r9d
     mov eax, 9
     syscall
+    cmp rax, -4095
+    jae .bad_exit
     mov rdi, rax
     mov r12, rax
     mov rsi, [rsp+16]
+
 .parse_loop:
     mov al, [rsi]
     test al, al
@@ -116,9 +125,16 @@ _start:
 .skip1:
     inc rsi
     jmp .parse_loop
+
 .parse_done:
-    mov rax, r12
-    call rax
+    cmp rdi, r12         ; rien écrit ?
+    je .bad_exit
+    jmp r12
     xor edi, edi
+    mov eax, 60
+    syscall
+
+.bad_exit:
+    mov edi, 1
     mov eax, 60
     syscall
