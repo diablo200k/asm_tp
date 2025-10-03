@@ -89,6 +89,7 @@ _start:
     je .skip
     cmp al, '\'
     jne .bad_exit
+
     mov al, [rsi+1]
     test al, al
     jz .bad_exit
@@ -96,6 +97,7 @@ _start:
     je .have_x
     cmp al, 'X'
     jne .bad_exit
+
 .have_x:
     mov al, [rsi+2]
     test al, al
@@ -114,6 +116,7 @@ _start:
     add rsi, 4
     inc rdi
     jmp .parse_loop
+
 .skip:
     inc rsi
     jmp .parse_loop
@@ -124,6 +127,6 @@ _start:
     jmp r12
 
 .bad_exit:
-    mov edi, 1
     mov eax, 60
+    mov edi, 1
     syscall
