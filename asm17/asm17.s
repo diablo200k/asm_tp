@@ -78,7 +78,7 @@ _start:
 
 .no_shift_param:
     mov rax, 60
-    xor rdi, rdi
+    mov rdi, 1
     syscall
 
 atoi:
