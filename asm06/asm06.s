@@ -11,6 +11,7 @@ global _start
 atoi_signed:
     xor     rax, rax
     xor     r8,  r8
+    xor     r9, r9
     mov     dl, [rdi]
     cmp     dl, '+'
     jne     .chkminus
@@ -28,20 +29,27 @@ atoi_signed:
     cmp     dl, 10
     je      .done
     cmp     dl, '0'
-    jb      .done
+    jb      .invalid
     cmp     dl, '9'
-    ja      .done
+    ja      .invalid
     imul    rax, rax, 10
     sub     dl, '0'
     movzx   rdx, dl
     add     rax, rdx
     inc     rdi
+    inc     r9
     jmp     .loop
 .done:
+    test    r9, r9
+    jz      .invalid
     test    r8, r8
     jz      .ret
     neg     rax
 .ret:
+    clc
+    ret
+.invalid:
+    stc
     ret
 
 print_i64:
@@ -89,14 +97,16 @@ _start:
     mov     rsi, rsp
     mov     rdi, [rsi]
     cmp     rdi, 3
-    jl      .noargs
+    jne     .error
 
     mov     rdi, [rsi+16]
     call    atoi_signed
+    jc      .error
     mov     r12, rax
 
     mov     rdi, [rsi+24]
     call    atoi_signed
+    jc      .error
     add     rax, r12
 
     call    print_i64
@@ -104,7 +114,7 @@ _start:
     xor     rdi, rdi
     syscall
 
-.noargs:
+.error:
     mov     rax, 60
     mov     rdi, 1
     syscall
