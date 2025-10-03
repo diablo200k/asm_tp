@@ -90,27 +90,26 @@ _start:
     jne .copy_backslash
 .have_x:
     mov al, [rsi+2]
-    push rsi
     call hexval
-    jc .restore_copy
+    jc .copy_backslash
     shl al, 4
     mov bl, al
     mov al, [rsi+3]
     call hexval
-    jc .restore_copy
+    jc .copy_backslash
     or al, bl
     mov [rdi], al
     add rsi, 4
     inc rdi
     jmp .parse_loop
-.restore_copy:
-    pop rsi
+
 .copy_backslash:
     mov al, [rsi]
     mov [rdi], al
     inc rsi
     inc rdi
     jmp .parse_loop
+
 .copy_char:
     cmp al, ' '
     je .skip1
@@ -127,12 +126,9 @@ _start:
     jmp .parse_loop
 
 .parse_done:
-    cmp rdi, r12         ; rien écrit ?
+    cmp rdi, r12
     je .bad_exit
     jmp r12
-    xor edi, edi
-    mov eax, 60
-    syscall
 
 .bad_exit:
     mov edi, 1
