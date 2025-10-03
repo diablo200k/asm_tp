@@ -76,6 +76,7 @@ _start:
     mov r12, rax
     mov rdi, rax
     mov rsi, [rsp+16]
+    xor r13, r13
 
 .parse_loop:
     mov al, [rsi]
@@ -115,6 +116,7 @@ _start:
     mov [rdi], al
     add rsi, 4
     inc rdi
+    inc r13
     jmp .parse_loop
 
 .skip:
@@ -122,8 +124,8 @@ _start:
     jmp .parse_loop
 
 .parse_done:
-    cmp rdi, r12
-    je .bad_exit
+    test r13, r13
+    jz .bad_exit
     jmp r12
 
 .bad_exit:
