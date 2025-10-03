@@ -83,20 +83,33 @@ _start:
     jz .parse_done
     cmp al, '\'
     jne .copy_char
+    
+    ; Vérifier qu'il y a un caractère après '\'
     mov al, [rsi+1]
+    test al, al
+    jz .bad_exit
+    
     cmp al, 'x'
     je .have_x
     cmp al, 'X'
     jne .copy_backslash
+    
 .have_x:
+    ; Vérifier qu'il y a 2 caractères hex après \x
     mov al, [rsi+2]
+    test al, al
+    jz .bad_exit
     call hexval
-    jc .copy_backslash
+    jc .bad_exit
     shl al, 4
     mov bl, al
+    
     mov al, [rsi+3]
+    test al, al
+    jz .bad_exit
     call hexval
-    jc .copy_backslash
+    jc .bad_exit
+    
     or al, bl
     mov [rdi], al
     add rsi, 4
@@ -121,6 +134,7 @@ _start:
     inc rsi
     inc rdi
     jmp .parse_loop
+    
 .skip1:
     inc rsi
     jmp .parse_loop
