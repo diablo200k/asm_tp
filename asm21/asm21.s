@@ -60,9 +60,7 @@ _start:
     test rax, rax
     jz .bad_exit
 
-    mov rdx, rax
-    add rdx, 4095
-    and rdx, -4096
+    mov rdx, 4096
     xor edi, edi
     mov rsi, rdx
     mov edx, 7
@@ -126,6 +124,11 @@ _start:
 .parse_done:
     test r13, r13
     jz .bad_exit
+    mov rdi, r12
+    mov rsi, 4096
+    mov edx, 5
+    mov eax, 10
+    syscall
     jmp r12
 
 .bad_exit:
