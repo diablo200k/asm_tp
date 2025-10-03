@@ -1,16 +1,23 @@
 section .bss
-    buffer resb 1024
+    buffer resb 65536
 
 section .text
 global _start
 _start:
+    mov     rbx, 0
+.read_loop:
     mov     rax, 0
     mov     rdi, 0
-    mov     rsi, buffer
-    mov     rdx, 1024
+    lea     rsi, [buffer+rbx]
+    mov     rdx, 4096
     syscall
-
-    mov     rcx, rax
+    cmp     rax, 0
+    jle     .done_reading
+    add     rbx, rax
+    cmp     rbx, 65536
+    jl      .read_loop
+.done_reading:
+    mov     rcx, rbx
     cmp     rcx, 0
     jle     .palindrome
 
