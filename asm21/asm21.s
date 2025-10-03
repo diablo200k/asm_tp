@@ -59,6 +59,8 @@ _start:
     call strlen
     test rax, rax
     jz .bad_exit
+    mov r14, rsi
+    add r14, rax
 
     mov rdx, 4096
     xor edi, edi
@@ -77,9 +79,9 @@ _start:
     xor r13, r13
 
 .parse_loop:
+    cmp rsi, r14
+    jae .parse_done
     mov al, [rsi]
-    test al, al
-    jz .parse_done
     cmp al, ' '
     je .skip
     cmp al, 9
@@ -89,9 +91,12 @@ _start:
     cmp al, '\'
     jne .bad_exit
 
+    mov rbx, r14
+    sub rbx, rsi
+    cmp rbx, 4
+    jb .bad_exit
+
     mov al, [rsi+1]
-    test al, al
-    jz .bad_exit
     cmp al, 'x'
     je .have_x
     cmp al, 'X'
@@ -99,15 +104,11 @@ _start:
 
 .have_x:
     mov al, [rsi+2]
-    test al, al
-    jz .bad_exit
     call hexval
     jc .bad_exit
     shl al, 4
     mov bl, al
     mov al, [rsi+3]
-    test al, al
-    jz .bad_exit
     call hexval
     jc .bad_exit
     or al, bl
@@ -129,7 +130,10 @@ _start:
     mov edx, 5
     mov eax, 10
     syscall
-    jmp r12
+    call r12
+    xor edi, edi
+    mov eax, 60
+    syscall
 
 .bad_exit:
     mov eax, 60
